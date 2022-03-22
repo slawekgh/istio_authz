@@ -1,0 +1,19 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: mygateway
+  namespace: slawek
+spec:
+  selector:
+    #app: istio-ingressgateway
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - app08.slawek.svc.cluster.local
+    - app07.slawek.svc.cluster.local
+    - uk.bookinfo8.com
+    - uk.bookinfo7.com

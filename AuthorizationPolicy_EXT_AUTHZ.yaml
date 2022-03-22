@@ -1,0 +1,20 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: ext-authz
+  namespace: slawek
+spec:
+  selector:
+    matchLabels:
+      name: app07 #DENY tylko dla app07, dla app08 nic tu sie nie zmienia
+  action: CUSTOM
+  provider:
+    # The provider name must match the extension provider defined in the mesh config.
+    # You can also replace this with sample-ext-authz-http to test the other external authorizer definition.
+    name: sample-ext-authz-http
+  rules:
+  # The rules specify when to trigger the external authorizer.
+  - to:
+    - operation:
+        #paths: ["/"]
+        hosts: ["uk.bookinfo7.com"]

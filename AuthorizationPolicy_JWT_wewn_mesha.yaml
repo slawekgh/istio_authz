@@ -1,0 +1,46 @@
+apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+  name: httpbin
+  namespace: slawek
+spec:
+  selector:
+    matchLabels:
+      name: app07
+  jwtRules:
+  - issuer: "testing@secure.istio.io"
+    jwksUri: "https://raw.githubusercontent.com/istio/istio/release-1.11/security/tools/jwt/samples/jwks.json"
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: httpbin
+  namespace: slawek
+spec:
+  selector:
+    matchLabels:
+      name: app07 #DENY tylko dla app07, dla app08 nic tu sie nie zmienia
+  action: ALLOW #podobno jak jest ALLOW to tylko to wlazi a reszta deny z defaultu 
+  rules:
+  - from:
+    - source:
+        namespaces: ["istio-system","slawek"]    #istio-system dla zezw dla ruchu z IstioIngressGatewaya czyli z zewn klastra, slawek dla ruchu wewn NS
+    to:
+    - operation:
+        methods: ["GET"]
+        paths: ["/"]
+    when: 
+    - key: request.auth.principal
+      values: ["testing@secure.istio.io/testing@secure.istio.io"]
+
+# primo - dotyczy tylko matchlabels - name=app07 - a wiec tylko app07, dzialanie tego gizma zupelnie nie dotyczy app08 
+# po drugie - wazne - jest ALLOW wiec dopuszcza tylko to , reszte tak jakby blokuje 
+# po trzecie - zastosowalem "when" czyli Conditions :
+# https://istio.io/latest/docs/reference/config/security/authorization-policy/#Condition
+# https://istio.io/latest/docs/reference/config/security/conditions/
+# innymi slowy - blokada po calosci na app07 chyba ze w Header bedzie BEARER TOKEN
+# curl -H "Authorization: Bearer $TOKEN" app07.slawek.svc.cluster.local:8080# 
+# wczesniej jednak : TOKEN=$(curl https://raw.githubusercontent.com/istio/istio/release-1.11/security/tools/jwt/samples/demo.jwt -s) && echo "$TOKEN" | cut -d '.' -f2 - | base64 --decode - 
+# taki TOKEN wyglada tak:
+#
+# {"exp":4685989700,"foo":"bar","iat":1532389700,"iss":"testing@secure.istio.io","sub":"testing@secure.istio.io"}# 
